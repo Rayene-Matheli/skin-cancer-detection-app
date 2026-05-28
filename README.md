@@ -15,6 +15,9 @@ Application Web Flask intégrant un modèle Deep Learning (VGG16) pour la détec
 ### 🔬 Analyse Patient
 ![Analyse](analyse.png)
 
+## 📸 Resultat
+![Resultat](Resultat.png)
+
 ### 📋 Historique des Patients
 ![Patients](patients.png)
 
