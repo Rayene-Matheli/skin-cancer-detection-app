@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DermAI — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { min-height: 100vh; }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 16px rgba(26,107,90,0.2);
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-logo {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo svg { width: 20px; height: 20px; color: white; }
+    .topbar-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: white;
+      letter-spacing: -0.2px;
+    }
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-avatar {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+    }
+    .topbar-username {
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+    }
+    .topbar-logout {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .topbar-logout:hover {
+      background: rgba(255,255,255,0.22);
+      color: white;
+    }
+
+    .page-body {
+      padding: 40px 24px 60px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .welcome-block {
+      margin-bottom: 36px;
+    }
+    .welcome-block h2 {
+      font-family: var(--font-display);
+      font-size: 30px;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+    .welcome-block p {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .nav-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .nav-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-focus);
+    }
+    .nav-card-icon {
+      width: 64px; height: 64px;
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-card-icon svg { width: 30px; height: 30px; }
+    .nav-card-icon.green  { background: var(--primary-light); }
+    .nav-card-icon.green svg { color: var(--primary); }
+    .nav-card-icon.teal   { background: #e0f7f2; }
+    .nav-card-icon.teal svg { color: #0d9b79; }
+    .nav-card-icon.amber  { background: #fff4e5; }
+    .nav-card-icon.amber svg { color: #c07a18; }
+
+    .nav-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .nav-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .stat-dot.green  { background: var(--primary); }
+    .stat-dot.red    { background: var(--danger); }
+    .stat-dot.blue   { background: #2196F3; }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .nav-grid { grid-template-columns: 1fr; }
+      .quick-stats { grid-template-columns: 1fr; }
+      .topbar { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1 1 .03 2.699-1.399 2.49l-4.5-.7M5 14.5l-1.402 1.402c-1 1-.03 2.699 1.399 2.49l4.5-.7"/>
+        </svg>
+      </div>
+      <span class="topbar-name">DermAI</span>
+    </div>
+    <div class="topbar-user">
+      <div class="topbar-avatar">{{ session['user'][0:2]|upper }}</div>
+      <span class="topbar-username">{{ session['user'] }}</span>
+      <a href="/logout" class="topbar-logout">Déconnexion</a>
+    </div>
+  </nav>
+
+  <div class="page-body">
+
+    <div class="welcome-block">
+      <h2>Bonjour, Dr. {{ session['user'] }} 👋</h2>
+      <p>Tableau de bord — Système de détection du cancer de la peau assisté par IA</p>
+    </div>
+
+    <div class="section-title">Actions rapides</div>
+    <div class="nav-grid">
+      <a href="/predict" class="nav-card">
+        <div class="nav-card-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/>
+          </svg>
+        </div>
+        <div>
+          <div class="nav-card-title">Nouvelle Analyse</div>
+          <div class="nav-card-desc">Analyser une image dermoscopique par IA</div>
+        </div>
+      </a>
+
+      <a href="/patients" class="nav-card">
+        <div class="nav-card-icon teal">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="nav-card-title">Historique Patients</div>
+          <div class="nav-card-desc">Consulter tous les dossiers patients</div>
+        </div>
+      </a>
+
+      <a href="/stats" class="nav-card">
+        <div class="nav-card-icon amber">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="nav-card-title">Statistiques</div>
+          <div class="nav-card-desc">Visualiser les données et tendances</div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</body>
+</html>
