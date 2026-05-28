@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DermAI — Statistiques</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body { min-height: 100vh; }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 0 32px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 16px rgba(26,107,90,0.2);
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo svg { width: 20px; height: 20px; color: white; }
+    .topbar-name { font-family: var(--font-display); font-size: 20px; color: white; }
+    .topbar-back {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white; padding: 6px 14px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; text-decoration: none;
+      transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .topbar-back:hover { background: rgba(255,255,255,0.22); color: white; }
+    .topbar-back svg { width: 16px; height: 16px; }
+
+    .page-body {
+      padding: 40px 32px 60px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .page-heading {
+      margin-bottom: 32px;
+    }
+    .page-heading h2 {
+      font-family: var(--font-display);
+      font-size: 28px; color: var(--primary-dark); margin-bottom: 6px;
+    }
+    .page-heading p { font-size: 14px; color: var(--text-secondary); }
+
+    /* Stat tiles */
+    .stats-tiles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-tile {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-tile::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      border-radius: 4px 0 0 4px;
+    }
+    .stat-tile.total::before  { background: var(--primary); }
+    .stat-tile.malign::before { background: var(--danger); }
+    .stat-tile.benign::before { background: var(--success); }
+
+    .stat-tile-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .stat-tile-value {
+      font-size: 40px;
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-tile.total  .stat-tile-value { color: var(--primary); }
+    .stat-tile.malign .stat-tile-value { color: var(--danger); }
+    .stat-tile.benign .stat-tile-value { color: var(--success); }
+
+    .stat-tile-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Chart grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .chart-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .chart-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .chart-card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    canvas { max-height: 260px; }
+
+    @media (max-width: 700px) {
+      .stats-tiles { grid-template-columns: 1fr; }
+      .charts-grid  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5"/>
+        </svg>
+      </div>
+      <span class="topbar-name">DermAI</span>
+    </div>
+    <a href="/dashboard" class="topbar-back">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      Dashboard
+    </a>
+  </nav>
+
+  <div class="page-body">
+
+    <div class="page-heading">
+      <h2>Statistiques des Diagnostics</h2>
+      <p>Vue d'ensemble des analyses effectuées par le système DermAI</p>
+    </div>
+
+    <!-- Tiles -->
+    <div class="stats-tiles">
+      <div class="stat-tile total">
+        <div class="stat-tile-label">Total patients</div>
+        <div class="stat-tile-value">{{ total }}</div>
+        <div class="stat-tile-sub">analyses effectuées</div>
+      </div>
+      <div class="stat-tile malign">
+        <div class="stat-tile-label">Cas malins</div>
+        <div class="stat-tile-value">{{ malignant }}</div>
+        <div class="stat-tile-sub">
+          {% if total > 0 %}{{ ((malignant / total) * 100)|round(1) }}% du total{% else %}0%{% endif %}
+        </div>
+      </div>
+      <div class="stat-tile benign">
+        <div class="stat-tile-label">Cas bénins</div>
+        <div class="stat-tile-value">{{ benign }}</div>
+        <div class="stat-tile-sub">
+          {% if total > 0 %}{{ ((benign / total) * 100)|round(1) }}% du total{% else %}0%{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-title">Répartition des diagnostics</div>
+        <div class="chart-card-sub">Proportion Malignant / Bénin</div>
+        <canvas id="pieChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Comparaison par résultat</div>
+        <div class="chart-card-sub">Nombre de cas analysés</div>
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const mal = {{ malignant }};
+    const ben = {{ benign }};
+
+    const DANGER  = '#c0392b';
+    const SUCCESS = '#1a7a50';
+    const DANGER_L  = 'rgba(192,57,43,0.12)';
+    const SUCCESS_L = 'rgba(26,122,80,0.12)';
+
+    // Pie
+    new Chart(document.getElementById('pieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Malignant', 'Benign'],
+        datasets: [{
+          data: [mal, ben],
+          backgroundColor: [DANGER, SUCCESS],
+          borderColor: ['#fff', '#fff'],
+          borderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        cutout: '62%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 18,
+              font: { family: 'DM Sans', size: 13 },
+              usePointStyle: true,
+              pointStyleWidth: 10
+            }
+          }
+        }
+      }
+    });
+
+    // Bar
+    new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Malignant', 'Benign'],
+        datasets: [{
+          label: 'Nombre de patients',
+          data: [mal, ben],
+          backgroundColor: [DANGER_L, SUCCESS_L],
+          borderColor: [DANGER, SUCCESS],
+          borderWidth: 2,
+          borderRadius: 10,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              font: { family: 'DM Sans', size: 12 },
+              color: '#8aa89f'
+            },
+            grid: { color: '#e8f0ed' }
+          },
+          x: {
+            ticks: { font: { family: 'DM Sans', size: 13 }, color: '#4a6b61' },
+            grid: { display: false }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

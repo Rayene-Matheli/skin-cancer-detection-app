@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DermAI — Résultat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { min-height: 100vh; }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 16px rgba(26,107,90,0.2);
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo svg { width: 20px; height: 20px; color: white; }
+    .topbar-name { font-family: var(--font-display); font-size: 20px; color: white; }
+
+    .page-body {
+      padding: 40px 24px 60px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .result-hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .result-icon-ring {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      border: 3px solid;
+    }
+    .result-icon-ring.malignant {
+      background: var(--danger-light);
+      border-color: var(--danger);
+    }
+    .result-icon-ring.benign {
+      background: var(--success-light);
+      border-color: var(--success);
+    }
+    .result-icon-ring svg { width: 40px; height: 40px; }
+    .result-icon-ring.malignant svg { color: var(--danger); }
+    .result-icon-ring.benign svg { color: var(--success); }
+
+    .result-label {
+      font-family: var(--font-display);
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .result-label.malignant { color: var(--danger); }
+    .result-label.benign    { color: var(--success); }
+
+    .result-sublabel {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Confidence gauge */
+    .confidence-block {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .confidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .confidence-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .confidence-pct {
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .confidence-pct.malignant { color: var(--danger); }
+    .confidence-pct.benign    { color: var(--success); }
+
+    .gauge-track {
+      height: 10px;
+      background: var(--border);
+      border-radius: 50px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .gauge-fill {
+      height: 100%;
+      border-radius: 50px;
+      transition: width 1s ease;
+    }
+    .gauge-fill.malignant { background: linear-gradient(90deg, #e07070, var(--danger)); }
+    .gauge-fill.benign    { background: linear-gradient(90deg, var(--accent), var(--success)); }
+
+    .gauge-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Image display */
+    .image-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .image-card img {
+      max-width: 100%;
+      max-height: 280px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      object-fit: cover;
+    }
+    .image-caption {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    /* Recommendation block */
+    .reco-card {
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border-left: 4px solid;
+    }
+    .reco-card.malignant {
+      background: var(--danger-light);
+      border-color: var(--danger);
+    }
+    .reco-card.benign {
+      background: var(--success-light);
+      border-color: var(--success);
+    }
+    .reco-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .reco-card.malignant .reco-title { color: #7a1e15; }
+    .reco-card.benign    .reco-title { color: #0e4d30; }
+    .reco-body {
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .reco-card.malignant .reco-body { color: #6b2018; }
+    .reco-card.benign    .reco-body { color: #1a5e3a; }
+
+    /* Steps complete */
+    .steps-row {
+      display: flex; align-items: center; margin-bottom: 32px;
+    }
+    .step-item { display: flex; align-items: center; gap: 8px; }
+    .step-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: var(--text-muted);
+    }
+    .step-txt { font-size: 12px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+    .step-item.done .step-num { background: var(--accent); border-color: var(--accent); color: white; }
+    .step-item.done .step-txt { color: var(--accent); font-weight: 600; }
+    .step-line { flex: 1; height: 2px; background: var(--accent); margin: 0 10px; min-width: 30px; border-radius: 1px; }
+
+    .actions-row {
+      display: flex; gap: 12px;
+    }
+    .actions-row .btn { flex: 1; }
+  </style>
+</head>
+<body>
+
+  <nav class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5"/>
+        </svg>
+      </div>
+      <span class="topbar-name">DermAI</span>
+    </div>
+    <span style="font-size: 13px; color: rgba(255,255,255,0.7);">Rapport de diagnostic</span>
+  </nav>
+
+  <div class="page-body">
+
+    <!-- Steps complete -->
+    <div class="steps-row">
+      <div class="step-item done"><div class="step-num">✓</div><span class="step-txt">Infos patient</span></div>
+      <div class="step-line"></div>
+      <div class="step-item done"><div class="step-num">✓</div><span class="step-txt">Image</span></div>
+      <div class="step-line"></div>
+      <div class="step-item done"><div class="step-num">✓</div><span class="step-txt">Résultat</span></div>
+    </div>
+
+    <!-- Hero result -->
+    <div class="result-hero">
+      {% if result == 'Malignant' %}
+      <div class="result-icon-ring malignant">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+        </svg>
+      </div>
+      <div class="result-label malignant">Malin (Malignant)</div>
+      <div class="result-sublabel">Lésion potentiellement cancéreuse détectée</div>
+      {% else %}
+      <div class="result-icon-ring benign">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="result-label benign">Bénin (Benign)</div>
+      <div class="result-sublabel">Aucune lésion maligne détectée</div>
+      {% endif %}
+    </div>
+
+    <!-- Confidence gauge -->
+    <div class="confidence-block">
+      <div class="confidence-header">
+        <span class="confidence-title">Indice de confiance IA</span>
+        <span class="confidence-pct {{ result|lower }}">{{ prob }}%</span>
+      </div>
+      <div class="gauge-track">
+        <div class="gauge-fill {{ result|lower }}" id="gaugeFill" style="width: 0%"></div>
+      </div>
+      <div class="gauge-labels">
+        <span>0%</span>
+        <span>Seuil décision: 50%</span>
+        <span>100%</span>
+      </div>
+    </div>
+
+    <!-- Image -->
+    <div class="image-card">
+      <img src="{{ url_for('static', filename=img) }}" alt="Image dermoscopique analysée">
+      <div class="image-caption">Image dermoscopique soumise pour analyse · Modèle VGG16</div>
+    </div>
+
+    <!-- Recommendation -->
+    {% if result == 'Malignant' %}
+    <div class="reco-card malignant">
+      <div class="reco-title">⚠️ Recommandation clinique urgente</div>
+      <div class="reco-body">
+        La lésion présente des caractéristiques compatibles avec une néoplasie maligne. Une consultation dermatologique urgente est fortement recommandée. Une biopsie cutanée doit être envisagée pour confirmation histologique. Ne pas retarder la prise en charge.
+      </div>
+    </div>
+    {% else %}
+    <div class="reco-card benign">
+      <div class="reco-title">✅ Résultat rassurant</div>
+      <div class="reco-body">
+        La lésion analysée ne présente pas de caractéristiques malignes selon le modèle IA. Un suivi dermatologique de routine est recommandé. En cas d'évolution de la lésion, une réévaluation est conseillée.
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="disclaimer">
+      <strong>Avertissement :</strong> Ce résultat est généré par un modèle d'intelligence artificielle (VGG16) et constitue uniquement un outil d'aide à la décision. Il ne remplace pas le jugement clinique d'un médecin spécialiste.
+    </div>
+
+    <div class="actions-row mt-16">
+      <a href="/predict" class="btn btn-accent">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Nouvelle analyse
+      </a>
+      <a href="/dashboard" class="btn btn-ghost">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:18px;height:18px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+        </svg>
+        Dashboard
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    // Animate gauge on load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('gaugeFill').style.width = '{{ prob }}%';
+      }, 300);
+    });
+  </script>
+
+</body>
+</html>

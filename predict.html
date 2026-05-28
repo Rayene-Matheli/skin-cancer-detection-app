@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DermAI — Nouvelle Analyse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { min-height: 100vh; }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 16px rgba(26,107,90,0.2);
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-logo {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo svg { width: 20px; height: 20px; color: white; }
+    .topbar-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: white;
+    }
+    .topbar-back {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .topbar-back:hover { background: rgba(255,255,255,0.22); color: white; }
+    .topbar-back svg { width: 16px; height: 16px; }
+
+    .page-body {
+      padding: 40px 24px 60px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .page-heading {
+      margin-bottom: 28px;
+    }
+    .page-heading h2 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+    .page-heading p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Steps */
+    .steps-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 32px;
+      gap: 0;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .step-txt {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .step-item.active .step-num {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .step-item.active .step-txt { color: var(--primary); font-weight: 600; }
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin: 0 10px;
+      min-width: 30px;
+      border-radius: 1px;
+    }
+
+    /* Image preview */
+    #preview-wrap {
+      display: none;
+      margin-top: 16px;
+      text-align: center;
+    }
+    #preview-wrap img {
+      max-height: 200px;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--border-focus);
+      box-shadow: var(--shadow-sm);
+    }
+    #preview-name {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* Loading overlay */
+    #loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 107, 90, 0.85);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+    #loading-overlay.active { display: flex; }
+    .spinner {
+      width: 56px; height: 56px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .loading-sub {
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Analyse en cours…</div>
+    <div class="loading-sub">Le modèle VGG16 traite l'image dermoscopique</div>
+  </div>
+
+  <nav class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/>
+        </svg>
+      </div>
+      <span class="topbar-name">DermAI</span>
+    </div>
+    <a href="/dashboard" class="topbar-back">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      Retour
+    </a>
+  </nav>
+
+  <div class="page-body">
+
+    <div class="page-heading">
+      <h2>Nouvelle Analyse</h2>
+      <p>Remplissez les informations patient et soumettez une image dermoscopique pour diagnostic IA</p>
+    </div>
+
+    <!-- Steps indicator -->
+    <div class="steps-row">
+      <div class="step-item active"><div class="step-num">1</div><span class="step-txt">Infos patient</span></div>
+      <div class="step-line"></div>
+      <div class="step-item active"><div class="step-num">2</div><span class="step-txt">Image</span></div>
+      <div class="step-line"></div>
+      <div class="step-item"><div class="step-num">3</div><span class="step-txt">Résultat</span></div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }}" style="margin-bottom: 20px;">
+      <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+      </svg>
+      <div><div class="alert-title">{{ msg }}</div></div>
+    </div>
+    {% endfor %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data" id="analyseForm">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-header-title">Informations du patient</div>
+            <div class="card-header-sub">Données démographiques de base</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="name">Nom complet</label>
+            <input type="text" id="name" name="name" placeholder="Ex : Mohamed Ben Ali" required>
+          </div>
+          <div class="form-group">
+            <label for="age">Âge</label>
+            <input type="number" id="age" name="age" placeholder="Ex : 45" min="1" max="120" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-header-title">Image dermoscopique</div>
+            <div class="card-header-sub">JPG, PNG — Haute résolution recommandée</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" name="image" id="imageInput" accept="image/*" required>
+            <div class="upload-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+              </svg>
+            </div>
+            <div class="upload-title">Glisser-déposer ou cliquer pour sélectionner</div>
+            <div class="upload-hint">Format: JPG, PNG · Taille max: 10 MB</div>
+          </div>
+
+          <div id="preview-wrap">
+            <img id="preview-img" src="" alt="Aperçu image">
+            <div id="preview-name"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="disclaimer" style="margin-bottom: 16px;">
+        <strong>Note clinique :</strong> Ce système est un outil d'aide à la décision basé sur VGG16. Le diagnostic final doit toujours être confirmé par un dermatologue qualifié.
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/>
+        </svg>
+        Lancer l'analyse IA
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const input = document.getElementById('imageInput');
+    const previewWrap = document.getElementById('preview-wrap');
+    const previewImg = document.getElementById('preview-img');
+    const previewName = document.getElementById('preview-name');
+    const form = document.getElementById('analyseForm');
+    const overlay = document.getElementById('loading-overlay');
+
+    input.addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        previewName.textContent = file.name + ' · ' + (file.size / 1024).toFixed(0) + ' KB';
+        previewWrap.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        input.files = e.dataTransfer.files;
+        input.dispatchEvent(new Event('change'));
+      }
+    });
+
+    form.addEventListener('submit', () => {
+      overlay.classList.add('active');
+    });
+  </script>
+
+</body>
+</html>
