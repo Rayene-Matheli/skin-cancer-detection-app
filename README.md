@@ -8,23 +8,30 @@ Application Web Flask intégrant un modèle Deep Learning (VGG16) pour la détec
 
 ![1](1.png)
 
+
 ![2](2.png)
+
 
 ![3](3.png)
 
+
 ![4](4.png)
+
 
 ![4.0](4.0.png)
 
+
 ![4.1](4.1.png)
+
 
 ![5](5.png)
 
+
 ![6](6.png)
+
 
 ![7](7.png)
 
-![8](8.png)
 
 
 ---
